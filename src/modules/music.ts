@@ -194,7 +194,7 @@ const playCommand: ModuleCommand = {
           leaveOnEnd: true,
           leaveOnEndCooldown: 60_000,
           leaveOnStop: true,
-          selfDeaf: true,
+          selfDeaf: false,
           maxSize: 200,
         },
       });
