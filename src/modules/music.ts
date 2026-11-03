@@ -6,7 +6,7 @@ import {
   type GuildMember,
   type VoiceBasedChannel,
 } from "discord.js";
-import { Player, QueryType, type GuildQueue } from "discord-player";
+import { Player, QueryType, type GuildQueue, type Track } from "discord-player";
 import { DefaultExtractors } from "@discord-player/extractor";
 import { EPHEMERAL, truncate } from "../core/util";
 import { config } from "../core/config";
@@ -67,6 +67,62 @@ function requireQueue(player: Player, guildId: string | null): GuildQueue<MusicM
 
 /* -------------------------------------- play ---------------------------------------- */
 
+/** Spotify / Apple Music links: metadata resolves, but their audio can't be streamed
+ *  directly (discord-player v7 has no YouTube bridge) — we look the song up on
+ *  SoundCloud by title/artist instead. */
+const STREAMING_LINK_RE = /^(?:https?:\/\/)?(?:open\.spotify\.com|music\.apple\.com)\/\S+/i;
+
+/** "4:35" / "1:02:03" → seconds; null when unparseable (e.g. "Live"). */
+function parseDurationSec(duration: string): number | null {
+  const parts = duration.split(":");
+  if (parts.length < 2 || parts.length > 3) return null;
+  let total = 0;
+  for (const p of parts) {
+    const n = Number(p);
+    if (!Number.isFinite(n)) return null;
+    total = total * 60 + n;
+  }
+  return total;
+}
+
+/**
+ * Pick the SoundCloud result that best matches the original track:
+ * title/author token overlap first, then closest duration (avoids30s previews
+ * and wrong songs that happen to have the same length).
+ */
+export function pickBestMatch(candidates: Track[], target: Track): Track | null {
+  if (candidates.length === 0) return null;
+  const targetSec = parseDurationSec(target.duration);
+  const tokens = `${target.title} ${target.author}`
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length > 1);
+
+  const scored = candidates.map((t) => {
+    const hay = `${t.title} ${t.description ?? ""}`.toLowerCase();
+    const overlap = tokens.length
+      ? tokens.filter((w) => hay.includes(w)).length / tokens.length
+      : 1;
+    return { t, overlap, sec: parseDurationSec(t.duration) };
+  });
+
+  const viable = scored.filter((s) => s.overlap >= 0.5);
+  const pool = viable.length > 0 ? viable : scored;
+  if (targetSec == null) return pool[0]?.t ?? candidates[0]!;
+
+  let best = pool[0]!;
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (const s of pool) {
+    if (s.sec == null) continue;
+    const score = Math.abs(s.sec - targetSec) + (1 - s.overlap) * targetSec * 0.5;
+    if (score < bestScore) {
+      bestScore = score;
+      best = s;
+    }
+  }
+  return best.t;
+}
+
 const playCommand: ModuleCommand = {
   public: true,
   data: new SlashCommandBuilder()
@@ -96,7 +152,38 @@ const playCommand: ModuleCommand = {
     await interaction.deferReply();
     const query = interaction.options.getString("query", true);
     try {
-      const result = await player.play(voice, query, {
+      let target: string | Track = query;
+      let extras: Track[] = [];
+
+      if (STREAMING_LINK_RE.test(query.trim())) {
+        const meta = await player.search(query, { requestedBy: interaction.user }).catch(() => null);
+        if (!meta || meta.tracks.length === 0) {
+          await interaction.editReply("❌ Could not read that Spotify/Apple Music link.");
+          return;
+        }
+        const wanted = meta.playlist ? meta.tracks.slice(0, 20) : meta.tracks.slice(0, 1);
+        const resolved: Track[] = [];
+        for (const t of wanted) {
+          const r = await player
+            .search(`${t.title} ${t.author}`.trim(), {
+              requestedBy: interaction.user,
+              fallbackSearchEngine: QueryType.SOUNDCLOUD_SEARCH,
+            })
+            .catch(() => null);
+          const match = r ? pickBestMatch(r.tracks, t) : null;
+          if (match) resolved.push(match);
+        }
+        if (resolved.length === 0) {
+          await interaction.editReply(
+            "❌ I could read the track info, but found no playable match on SoundCloud. Try searching by name instead.",
+          );
+          return;
+        }
+        target = resolved[0]!;
+        extras = resolved.slice(1);
+      }
+
+      const result = await player.play(voice, target, {
         requestedBy: interaction.user,
         fallbackSearchEngine: QueryType.SOUNDCLOUD_SEARCH,
         nodeOptions: {
@@ -114,9 +201,14 @@ const playCommand: ModuleCommand = {
       const { track, queue } = result;
       // keep announcements pointed at the channel that issued the latest /play
       queue.metadata = { channelId: interaction.channelId } satisfies MusicMeta;
+      if (extras.length > 0) queue.addTrack(extras);
 
       const line = `**${truncate(track.title, 150)}** — \`${track.duration}\`${track.url ? ` • <${track.url}>` : ""}`;
-      if (queue.size === 0) {
+      if (extras.length > 0) {
+        await interaction.editReply(
+          `🎵 Spotify/Apple Music link → SoundCloud match. Now playing ${line} (+${extras.length} more from the playlist).`,
+        );
+      } else if (queue.size === 0) {
         await interaction.editReply(`▶️ Now playing ${line}`);
       } else {
         await interaction.editReply(`➕ Added at **#${queue.size}** in the queue: ${line}`);
