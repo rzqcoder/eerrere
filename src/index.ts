@@ -1,3 +1,4 @@
+import "./core/undiciFix"; // must run before discord-player loads soundcloud.ts
 import { connectDB } from "./db";
 import { env } from "./env";
 import { startHealthServer } from "./core/health";
