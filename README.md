@@ -68,6 +68,7 @@ curl localhost:3007/health   # local check
 | `utility` | `/snipe` `/userinfo` `/serverinfo` `/poll` `/remind` `/tag` `/role` `/nick` | Last deleted message, member/server details, reaction polls, DM reminders, server tags, role & nickname management |
 | `security` | `/security` | Anti-spam (delete + strike timeouts), anti-raid (alerts + optional auto-lockdown), anti-link with domain allowlist, bot-join protection, manual lockdown |
 | `automod` | `/automod` | Blocked word/phrase list with delete or delete+timeout actions |
+| `music` | `/play` `/skip` `/prev` `/pause` `/stop` `/shuffle` `/volume` `/queue` `/nowplaying` | Voice player via discord-player: SoundCloud/Spotify/Apple Music links or search, queue, progress bar |
 | `moderation` | `/mod` | ban/unban, kick, timeout/untimeout, warn, numbered cases, purge, slowmode |
 | `logging` | `/logging` | Route `message-delete/edit`, `member-join/leave/roles`, `role-changes`, `channel-changes`, `voice`, `bans`, `moderation` to channels |
 | `giveaways` | `/giveaway` | 🎉 reaction giveaways; scheduled ending via a sweeper, rerolls, list |

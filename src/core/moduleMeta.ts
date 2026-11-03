@@ -14,6 +14,7 @@ export const moduleMeta: ModuleMeta[] = [
   { name: "utility", description: "Snipe, user/server info, polls, reminders, tags, roles, nicknames", defaultEnabled: true, commands: ["snipe", "userinfo", "serverinfo", "poll", "remind", "tag", "role", "nick"] },
   { name: "security", description: "Anti-spam, anti-raid, anti-link, bot protection, lockdown", defaultEnabled: true, commands: ["security"] },
   { name: "automod", description: "Custom word filter with delete/timeout actions", defaultEnabled: true, commands: ["automod"] },
+  { name: "music", description: "Voice music player with queue and controls", defaultEnabled: true, commands: ["play", "skip", "prev", "pause", "stop", "shuffle", "volume", "queue", "nowplaying"] },
   { name: "moderation", description: "Bans, kicks, timeouts, warnings, cases, purge", defaultEnabled: true, commands: ["mod"] },
   { name: "logging", description: "Server events logged into configurable channels", defaultEnabled: true, commands: ["logging"] },
   { name: "giveaways", description: "Reaction-based giveaways", defaultEnabled: true, commands: ["giveaway"] },

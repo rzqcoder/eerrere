@@ -9,6 +9,7 @@ import { reactionRolesModule } from "./reactionroles";
 import { autoresponderModule } from "./autoresponder";
 import { tempVoiceModule } from "./tempvoice";
 import { embedsModule } from "./embeds";
+import { musicModule } from "./music";
 import { ticketsModule } from "./tickets";
 import { analyticsModule } from "./analytics";
 import { backupsModule } from "./backups";
@@ -31,6 +32,7 @@ export const modules: Module[] = [
   autoresponderModule,
   tempVoiceModule,
   embedsModule,
+  musicModule,
   ticketsModule,
   analyticsModule,
   backupsModule,

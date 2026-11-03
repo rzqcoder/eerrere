@@ -89,7 +89,11 @@ async function handleCommand(interaction: ChatInputCommandInteraction): Promise<
     void bumpCommandStat(interaction.guildId, interaction.commandName, interaction.user.id);
   } catch (err) {
     console.error(`[command:${interaction.commandName}]`, err);
-    await safeReply(interaction, "Something went wrong running that command.");
+    const friendly =
+      err instanceof Error && err.message.trim()
+        ? `⚠️ ${err.message.slice(0, 900)}`
+        : "Something went wrong running that command.";
+    await safeReply(interaction, friendly);
   }
 }
 
