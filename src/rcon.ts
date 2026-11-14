@@ -50,7 +50,12 @@ function decodePackets(buffer: Buffer): { packets: RconPacket[]; rest: Buffer } 
  */
 export function rconExec(command: string, timeoutMs = 8000): Promise<string> {
   // Read process.env per call (dotenv has already loaded .env into it at startup).
-  const host = process.env.MC_RCON_HOST ?? "";
+  // Tolerate pasted URLs: "wss://host", "http://host/path" → "host".
+  const host = (process.env.MC_RCON_HOST ?? "")
+    .trim()
+    .replace(/^(?:wss?|https?|mc):\/\//i, "")
+    .replace(/\/.*$/, "")
+    .replace(/:\d+$/, ""); // strip a pasted port (MC_RCON_PORT is the real one)
   const port = parseInt(process.env.MC_RCON_PORT ?? "25575", 10) || 25575;
   const password = process.env.MC_RCON_PASSWORD ?? "";
   if (!host || !password) {
