@@ -6,6 +6,7 @@ import {
   type EmbedBuilder,
 } from "discord.js";
 import { MC_ALLOWED_USER_IDS } from "../env";
+import { config } from "../core/config";
 import { EPHEMERAL, errMessage, makeEmbed, truncate } from "../core/util";
 import { rconExec } from "../rcon";
 import type { Module, ModuleCommand, ModuleEvent } from "../core/types";
@@ -109,6 +110,21 @@ let editTarget: ((s: Stats) => Promise<void>) | null = null;
 let lastStats: Stats = { online: false };
 let rotationIdx = 0;
 let loopStarted = false;
+let tickBusy = false;
+let lastPresence = "";
+
+/** Set presence only when it actually changes; never let it throw the loop. */
+function applyPresence(client: Client, type: ActivityType, name: string): void {
+  const key = `${type}:${name}`;
+  if (key === lastPresence) return;
+  lastPresence = key;
+  try {
+    client.user?.setPresence({ activities: [{ name, type }] });
+    console.log(`[status] presence → ${name}`);
+  } catch (err) {
+    console.error("[status] setPresence failed:", err);
+  }
+}
 
 const statusCommand: ModuleCommand = {
   data: new SlashCommandBuilder()
@@ -146,19 +162,31 @@ const readyEvent: ModuleEvent = {
     if (loopStarted) return;
     loopStarted = true;
     const tick = async (): Promise<void> => {
-      lastStats = await fetchStats();
-      if (editTarget) await editTarget(lastStats);
-      if (!rconConfigured()) {
-        client.user?.setPresence({ activities: [] });
-        return;
+      if (tickBusy) return; // previous fetch still running — don't stack
+      tickBusy = true;
+      try {
+        if (!rconConfigured()) {
+          // No MC_RCON_HOST → we can't read stats. Show the static presence
+          // instead of clearing activities (an empty presence looks "broken").
+          console.warn("[status] MC_RCON_HOST not set — rotating presence disabled, using static presence.");
+          applyPresence(client, config.presence.type, config.presence.name);
+          return;
+        }
+        lastStats = await fetchStats();
+        if (editTarget) await editTarget(lastStats);
+        const act = presenceFor(lastStats, rotationIdx++);
+        if (act) applyPresence(client, act.type, act.name);
+      } catch (err) {
+        console.error("[status] tick failed:", err);
+      } finally {
+        tickBusy = false;
       }
-      const act = presenceFor(lastStats, rotationIdx++);
-      if (act) client.user?.setActivity(act.name, { type: act.type });
     };
-    await tick();
+    // Interval FIRST: even if the initial tick throws, the loop must keep running.
     setInterval(() => {
       void tick();
     }, EDIT_MS);
+    await tick();
   },
 };
 

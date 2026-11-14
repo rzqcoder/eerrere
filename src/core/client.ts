@@ -26,14 +26,20 @@ export const startupAt = Date.now();
 
 client.once(Events.ClientReady, () => {
   console.log(`[bot] logged in as ${client.user?.tag}`);
-  client.user?.setPresence({
-    status: config.presence.status,
-    activities: [
-      {
-        name: config.presence.name,
-        type: config.presence.type,
-        url: config.presence.url,
-      },
-    ],
-  });
+  // Never let presence setup throw: a throwing listener would stop the other
+  // ClientReady listeners (status module's rotating presence) from running.
+  try {
+    client.user?.setPresence({
+      status: config.presence.status,
+      activities: [
+        {
+          name: config.presence.name,
+          type: config.presence.type,
+          url: config.presence.url,
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("[bot] initial presence failed:", err);
+  }
 });
