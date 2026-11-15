@@ -24,7 +24,6 @@ export const moduleMeta: ModuleMeta[] = [
   { name: "backups", description: "Server structure backups", defaultEnabled: true, commands: ["backup", "backupload", "backupdelete"] },
   { name: "minecraft", description: "Minecraft server control over RCON (owner-only)", defaultEnabled: true, commands: ["mc"] },
   { name: "status", description: "Live status message + rotating presence (players, TPS, CPU/RAM)", defaultEnabled: true, commands: ["status"] },
-  { name: "skin", description: "Look up Minecraft skins in Discord", defaultEnabled: true, commands: ["skin"] },
   { name: "daily", description: "Daily in-game money claims with streaks", defaultEnabled: true, commands: ["daily"] },
   { name: "events", description: "In-game event triggers: boss spawn (owner-only)", defaultEnabled: true, commands: ["boss"] },
   { name: "panel", description: "Minecraft control panel with one-click actions (owner-only)", defaultEnabled: true, commands: ["panel"] },

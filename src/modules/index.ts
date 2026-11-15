@@ -12,7 +12,6 @@ import { analyticsModule } from "./analytics";
 import { backupsModule } from "./backups";
 import { minecraftModule } from "./minecraft";
 import { statusModule } from "./status";
-import { skinModule } from "./skin";
 import { dailyModule } from "./daily";
 import { eventsModule } from "./events";
 import { panelModule } from "./panel";
@@ -38,7 +37,6 @@ export const modules: Module[] = [
   backupsModule,
   minecraftModule,
   statusModule,
-  skinModule,
   dailyModule,
   eventsModule,
   panelModule,

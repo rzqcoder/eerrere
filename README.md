@@ -64,7 +64,6 @@ Slash commands are registered automatically on startup for every server in `ALLO
 | `backups` | `/backup` `/backupload` `/backupdelete` | Snapshot and restore missing roles/channels (names/types/colors/bitrate – not permissions or messages) |
 | `minecraft` | `/mc` | Minecraft server control over RCON (owner-only): list, ban, tempban (auto-unban sweeper), pardon, banip, tempbanip, pardonip, kick, say, tp, gamemode, whitelist, raw `run` |
 | `status` | `/status` | Live status message (players / TPS / CPU / RAM, online-offline) + rotating bot presence (owner-only for the channel message) |
-| `skin` | `/skin` | Pull up any player's current 2D Minecraft skin |
 | `daily` | `/daily` | Daily in-game money via `/eco give` with a 24h cooldown and streak payouts (500→4k max) |
 | `events` | `/boss` | One-click in-game event triggers (runs `MC_BOSS_COMMANDS`, owner-only) |
 | `panel` | `/panel` | Private control panel: player avatar + one-click ban / kick / banip / tempban / tempbanip / mute buttons (owner-only) |
